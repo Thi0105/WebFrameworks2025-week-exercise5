@@ -1,17 +1,58 @@
+import { useEffect, useState } from "react";
+import RecipeTagList from "./RecipeTagList";
+import RecipeList from "./RecipeList";
+import { IRecipe } from './type' 
+
 
 const App = () => {
 
+  const [tagList, setTagList] = useState<string[]>([])
+  const [recipes, setRecipes] = useState<IRecipe[]>([])
+  const [selectedTag, setSelectedTag] = useState(null)
+
+  useEffect(() => {
+    async function loadTags() {
+      const res = await fetch("https://dummyjson.com/recipes/tags");
+      const data = await res.json();
+      setTagList(data)
+    }
+    loadTags()
+  }, [])
+
+  async function handleSelectTag(tagName: string) {
+    setSelectedTag(tagName)
+    const res = await fetch(`https://dummyjson.com/recipes/tag/${tagName}`);
+    const data = await res.json();
+    setRecipes(data.recipes);
+  }
+
+  function goBack() {
+    setSelectedTag(null)
+    setRecipes([])
+  }
+
+  let content;
+  if (!selectedTag) {
+    content = (
+      <>
+        <h3>Choose a tag below</h3>
+        <RecipeTagList tagList={tagList} onSelectTag={handleSelectTag}/>
+      </>
+    )
+  } else {
+    content = (
+      <>
+        <h2>Recipes for {selectedTag}</h2>
+        <div onClick={goBack}>Back</div>
+        <RecipeList recipes={recipes}/>
+      </>
+    )
+  }
 
   return (
     <div>
         <h1>ACME Recipe O'Master</h1>
-        <div>Remove this and implement recipe tag list here. </div>
-        <ul>
-        <li>On start the application displays a list of recipe tags such as 'pasta', 'cookies' etc. The tag information is loaded from an API (https://dummyjson.com/recipes/tags)</li>
-        <li> The user can click on a tag and the application will then hide the tag list and display a list of recipes matching the selected tag. The recipe information for the clicked tag is loaded from an API (https://dummyjson.com/recipes/tag/Pizza).</li>
-        <li> User can also go back to the tag list. </li>
-        <li> Each receipe is displayed as box where recipe data such as ingredients and instructions are displayed</li>
-        </ul>
+        {content}
     </div>
   );
 };
